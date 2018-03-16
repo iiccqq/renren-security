@@ -4,6 +4,7 @@ $(function () {
         datatype: "json",
         colModel: [			
 			{ label: 'id', name: 'id', width: 20, key: true },
+            { label: '名称', name: 'name', width: 160 },
             { label: 'URL地址', name: 'url', width: 160 },
 			{ label: '创建时间', name: 'createDate', width: 40 }
         ],
@@ -43,10 +44,40 @@ $(function () {
                 alert("云存储配置未配置");
                 return false;
             }
+            if (!(extension && /^(jpg|jpeg|png|gif|mp4|ogg)$/.test(extension.toLowerCase()))){
+                alert('只支持jpg、png、gif、mp4、ogg格式的图片！');
+                return false;
+            }
+        },
+        onComplete : function(file, r){
+            if(r.code == 0){
+                alert(r.url);
+                vm.reload();
+            }else{
+                alert(r.msg);
+            }
+        }
+    });
+    
+    new AjaxUpload('#uploadIcon', {
+        action: baseURL + "sys/oss/uploadIcon",
+        name: 'file',
+        autoSubmit:true,
+        responseType:"json",
+        onSubmit:function(file, extension){
+            if(vm.config.type == null){
+                alert("云存储配置未配置");
+                return false;
+            }
             if (!(extension && /^(jpg|jpeg|png|gif)$/.test(extension.toLowerCase()))){
                 alert('只支持jpg、png、gif格式的图片！');
                 return false;
             }
+            var ossIds = getSelectedRows();
+            if(ossIds == null){
+                return ;
+            }
+            this._settings.action = baseURL + "sys/oss/uploadIcon/" + ossIds[0];
         },
         onComplete : function(file, r){
             if(r.code == 0){
@@ -64,8 +95,12 @@ var vm = new Vue({
 	el:'#rrapp',
 	data:{
 		showList: true,
+		showStorage:false,
+		showContent:false,
 		title: null,
-        config: {}
+        config: {},
+        currentContent:{'catalogIdList':[]},
+        catalogList:[{catalogId:1,catalogName:"最新"},{catalogId:2,catalogName:"电影"}]
 	},
     created: function(){
         this.getConfig();
@@ -81,6 +116,8 @@ var vm = new Vue({
         },
 		addConfig: function(){
 			vm.showList = false;
+			vm.showStorage = true;
+			vm.showContent = false;
 			vm.title = "云存储配置";
 		},
 		saveOrUpdate: function () {
@@ -127,10 +164,43 @@ var vm = new Vue({
         },
 		reload: function () {
 			vm.showList = true;
+			vm.showStorage = false;
+			vm.showContent = false;
 			var page = $("#jqGrid").jqGrid('getGridParam','page');
 			$("#jqGrid").jqGrid('setGridParam',{ 
                 page:page
             }).trigger("reloadGrid");
+		},
+		getContent: function(){
+			vm.showList = false;
+			vm.showContent = true;
+			vm.showStorage = false;
+			var ossIds = getSelectedRows();
+	        if(ossIds == null){
+	             return ;
+	         }
+	        vm.currentContent.ossId = ossIds[0];
+			$.getJSON(baseURL + "sys/oss/content",{"ossId":ossIds[0]}, function(r){
+				vm.currentContent = r.content;
+            });
+		},
+		saveOrUpdateContent: function () {
+			var url = baseURL + "sys/oss/saveContent";
+			$.ajax({
+				type: "POST",
+			    url: url,
+                contentType: "application/json",
+			    data: JSON.stringify(vm.currentContent),
+			    success: function(r){
+			    	if(r.code === 0){
+						alert('操作成功', function(){
+							vm.reload();
+						});
+					}else{
+						alert(r.msg);
+					}
+				}
+			});
 		}
 	}
 });

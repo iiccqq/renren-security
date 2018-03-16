@@ -40,6 +40,10 @@ public class SysOssEntity implements Serializable {
 	private String url;
 	//创建时间
 	private Date createDate;
+	
+	private String name;
+	
+	private String icon;
 
 	/**
 	 * 设置：
@@ -77,4 +81,18 @@ public class SysOssEntity implements Serializable {
 	public Date getCreateDate() {
 		return createDate;
 	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public String getIcon() {
+		return icon;
+	}
+	public void setIcon(String icon) {
+		this.icon = icon;
+	}
+	
+	
 }
